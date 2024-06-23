@@ -10,18 +10,15 @@ import (
 )
 
 func main() {
-	// Initialize handlers
-	h := handlers.NewHandlers()
+	h, err := handlers.NewHandlers()
+	if err != nil {
+		log.Fatalf("Failed to create handlers: %v", err)
+	}
 
-	// Setup routes
 	mux := router.SetupRoutes(h)
 
-	// Define the port
-	port := ":8080"
-
-	// Start the server
-	fmt.Printf("Server starting on port %s...\n", port)
-	if err := http.ListenAndServe(port, mux); err != nil {
+	fmt.Println("Server starting on port 8080...")
+	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
