@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"reflect"
@@ -31,7 +32,11 @@ var (
 	}
 )
 
-func SetupRoutes(h *handlers.Handlers) *http.ServeMux {
+func SetupRoutes() *http.ServeMux {
+	h, err := handlers.NewHandlers()
+	if err != nil {
+		log.Printf("Error creating handlers: %v\n", err)
+	}
 	mux := http.NewServeMux()
 
 	config, err := loadConfig()
@@ -61,6 +66,13 @@ func SetupRoutes(h *handlers.Handlers) *http.ServeMux {
 		mux.Handle(route.Path, middleware.Chain(handler, middlewareStack...))
 	}
 
+	mux.HandleFunc("/light-framework.js", h.ServeJS)
+
+	mux.HandleFunc("/routes", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(config.Routes)
+	})
+
 	return mux
 }
 
@@ -77,19 +89,19 @@ func loadConfig() (*Config, error) {
 
 	routes := `
 	{
-  "routes": [
-    {
-      "path": "/",
-      "handler": "Home",
-      "middleware": "public"
-    },
-    {
-      "path": "/private",
-      "handler": "PublicPage",
-      "middleware": "private"
-    }
-  ]
-}`
+		"routes": [
+			{
+				"path": "/",
+				"handler": "Home",
+				"middleware": "public"
+			},
+			{
+				"path": "/private",
+				"handler": "PublicPage",
+				"middleware": "private"
+			}
+		]
+	}`
 
 	var config Config
 	err := json.Unmarshal([]byte(routes), &config)

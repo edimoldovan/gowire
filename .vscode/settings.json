@@ -1,0 +1,7 @@
+{
+  "editor.fontFamily": "CaskaydiaMono Nerd Font",
+  "editor.formatOnSave": true,
+  "html.format.enable": true,
+  "html.format.indentHandlebars": false,
+  "go.useLanguageServer": true
+}

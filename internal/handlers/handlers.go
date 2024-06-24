@@ -2,57 +2,105 @@ package handlers
 
 import (
 	"embed"
+	"fmt"
+	"gowire/internal/handlers/templates"
 	"html/template"
-	"io/fs"
+	"log"
 	"net/http"
 )
 
 //go:embed templates/*.html
 var templateFS embed.FS
 
-type Handlers struct {
-	templates *template.Template
+var Tmpl *template.Template
+
+type Handlers struct{}
+
+func init() {
+	Tmpl = templates.ParseTemplates(templateFS)
 }
 
 func NewHandlers() (*Handlers, error) {
-	tmpl, err := parseTemplates()
-	if err != nil {
-		return nil, err
+	return &Handlers{}, nil
+}
+
+func RenderHTML(w http.ResponseWriter, templateName string, params map[string]interface{}) {
+	if err := Tmpl.ExecuteTemplate(w, templateName, params); err != nil {
+		fmt.Printf("ERR: %v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	return &Handlers{templates: tmpl}, nil
 }
 
-func parseTemplates() (*template.Template, error) {
-	tmpl := template.New("")
+func (h Handlers) Home(w http.ResponseWriter, r *http.Request) {
+	log.Println("Home handler")
+	if r.Header.Get("X-Requested-With") == "LightFramework" {
+		RenderHTML(w, "home_content", nil)
+	} else {
+		RenderHTML(w, "home", map[string]interface{}{
+			"Title": "Home",
+		})
+	}
+}
 
-	err := fs.WalkDir(templateFS, "templates", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !d.IsDir() {
-			content, err := fs.ReadFile(templateFS, path)
-			if err != nil {
-				return err
-			}
-			_, err = tmpl.New(d.Name()).Parse(string(content))
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+func (h Handlers) PublicPage(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("X-Requested-With") == "LightFramework" {
+		RenderHTML(w, "private_content", nil)
+	} else {
+		RenderHTML(w, "private", map[string]interface{}{
+			"Title": "Private",
+		})
+	}
+}
 
-	if err != nil {
-		return nil, err
+func (h Handlers) ServeJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript")
+	fmt.Fprint(w, `
+	class LightFramework {
+		constructor(routes) {
+			this.routes = routes;
+			this.setupEventListeners();
+		}
+
+		setupEventListeners() {
+			document.addEventListener('click', async (event) => {
+				const target = event.target.closest('[data-light-action]');
+				if (target) {
+					event.preventDefault();
+					const action = target.getAttribute('data-light-action');
+					const route = this.routes.find(r => r.handler === action);
+					if (route) {
+						await this.handleAction(route);
+					}
+				}
+			});
+		}
+
+		async handleAction(route) {
+			try {
+				const response = await fetch(route.path, {
+					method: 'GET',
+					headers: {
+						'X-Requested-With': 'LightFramework'
+					}
+				});
+				const html = await response.text();
+				document.querySelector('#content').innerHTML = html;
+			} catch (error) {
+				console.error('Error:', error);
+			}
+		}
 	}
 
-	return tmpl, nil
-}
-
-func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
-	h.templates.ExecuteTemplate(w, "home.html", nil)
-}
-
-func (h *Handlers) PublicPage(w http.ResponseWriter, r *http.Request) {
-	h.templates.ExecuteTemplate(w, "private.html", nil)
+	// Initialize the framework with the routes
+	(async () => {
+		try {
+			const response = await fetch('/routes');
+			const routes = await response.json();
+			const light = new LightFramework(routes);
+		} catch (error) {
+			console.error('Error initializing LightFramework:', error);
+		}
+	})();
+	`)
 }
