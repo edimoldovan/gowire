@@ -1,22 +1,29 @@
 {{define "home"}}
 <!DOCTYPE html>
 <html>
-
-<head>
-  <title>Light Framework Demo</title>
-  <script type="module" src="/light-framework.js"></script>
-</head>
-
-<body>
-  <div id="content">
-    {{template "home_content" .}}
-  </div>
-</body>
-
+  {{template "head" .}}
+  <body>
+    {{template "header" .}}
+    <div id="content">
+      <h1>{{.Title}}</h1>
+    </div>
+  </body>
 </html>
 {{end}}
 
-{{define "home_content"}}
-<h1>Welcome to the Home Page</h1>
-<button data-light-action="PublicPage">Go to Private Page</button>
+{{define "header"}}
+<header>
+  <nav>
+    {{ link "/" "Home" "content" }}
+    {{ link "/about" "About" "content" }}
+    {{ link "/contact" "Contact" "content" }}
+  </nav>
+</header>
+{{end}}
+
+{{define "head"}}
+<head>
+  <title>{{.Title}}</title>
+  <script type="module" src="/light.js"></script>
+</head>
 {{end}}

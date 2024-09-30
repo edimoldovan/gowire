@@ -66,7 +66,7 @@ func SetupRoutes() *http.ServeMux {
 		mux.Handle(route.Path, middleware.Chain(handler, middlewareStack...))
 	}
 
-	mux.HandleFunc("/light-framework.js", h.ServeJS)
+	mux.HandleFunc("/light.js", h.ServeJS)
 
 	mux.HandleFunc("/routes", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -96,8 +96,18 @@ func loadConfig() (*Config, error) {
 				"middleware": "public"
 			},
 			{
+				"path": "/about",
+				"handler": "About",
+				"middleware": "public"
+			},
+			{
+				"path": "/contact",
+				"handler": "Contact",
+				"middleware": "public"
+			},
+			{
 				"path": "/private",
-				"handler": "PublicPage",
+				"handler": "Private",
 				"middleware": "private"
 			}
 		]

@@ -1,5 +1,5 @@
 {
-  "editor.fontFamily": "CaskaydiaMono Nerd Font",
+  "editor.fontFamily": "Menlo, Monaco, 'Courier New', monospace",
   "editor.formatOnSave": true,
   "html.format.enable": true,
   "html.format.indentHandlebars": false,

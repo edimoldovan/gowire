@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gowire/internal/handlers/templates"
 	"html/template"
-	"log"
 	"net/http"
 )
 
@@ -33,74 +32,30 @@ func RenderHTML(w http.ResponseWriter, templateName string, params map[string]in
 }
 
 func (h Handlers) Home(w http.ResponseWriter, r *http.Request) {
-	log.Println("Home handler")
-	if r.Header.Get("X-Requested-With") == "LightFramework" {
-		RenderHTML(w, "home_content", nil)
-	} else {
-		RenderHTML(w, "home", map[string]interface{}{
-			"Title": "Home",
-		})
-	}
+	RenderHTML(w, "home", map[string]interface{}{
+		"Title": "Home",
+	})
 }
 
-func (h Handlers) PublicPage(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("X-Requested-With") == "LightFramework" {
-		RenderHTML(w, "private_content", nil)
-	} else {
-		RenderHTML(w, "private", map[string]interface{}{
-			"Title": "Private",
-		})
-	}
+func (h Handlers) About(w http.ResponseWriter, r *http.Request) {
+	RenderHTML(w, "about", map[string]interface{}{
+		"Title": "About",
+	})
+}
+
+func (h Handlers) Contact(w http.ResponseWriter, r *http.Request) {
+	RenderHTML(w, "contact", map[string]interface{}{
+		"Title": "Contact",
+	})
+}
+
+func (h Handlers) Private(w http.ResponseWriter, r *http.Request) {
+	RenderHTML(w, "private", map[string]interface{}{
+		"Title": "Private",
+	})
 }
 
 func (h Handlers) ServeJS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/javascript")
-	fmt.Fprint(w, `
-	class LightFramework {
-		constructor(routes) {
-			this.routes = routes;
-			this.setupEventListeners();
-		}
-
-		setupEventListeners() {
-			document.addEventListener('click', async (event) => {
-				const target = event.target.closest('[data-light-action]');
-				if (target) {
-					event.preventDefault();
-					const action = target.getAttribute('data-light-action');
-					const route = this.routes.find(r => r.handler === action);
-					if (route) {
-						await this.handleAction(route);
-					}
-				}
-			});
-		}
-
-		async handleAction(route) {
-			try {
-				const response = await fetch(route.path, {
-					method: 'GET',
-					headers: {
-						'X-Requested-With': 'LightFramework'
-					}
-				});
-				const html = await response.text();
-				document.querySelector('#content').innerHTML = html;
-			} catch (error) {
-				console.error('Error:', error);
-			}
-		}
-	}
-
-	// Initialize the framework with the routes
-	(async () => {
-		try {
-			const response = await fetch('/routes');
-			const routes = await response.json();
-			const light = new LightFramework(routes);
-		} catch (error) {
-			console.error('Error initializing LightFramework:', error);
-		}
-	})();
-	`)
+	http.ServeFile(w, r, "web/static/js/light.js")
 }
