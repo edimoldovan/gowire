@@ -36,18 +36,20 @@ func SetupRoutes() (*http.ServeMux, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating handlers: %v", err)
 	}
+	if h == nil {
+		return nil, fmt.Errorf("handlers is nil after creation")
+	}
 
 	mux := http.NewServeMux()
-
 	routes, err := loadConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error loading config: %v", err)
 	}
 
 	for _, route := range *routes {
-		handler := getHandlerFunc(h, route.Handler)
-		if handler == nil {
-			log.Printf("Handler not found for route: %s\n", route.Path)
+		handler, err := getHandlerFunc(h, route.Handler)
+		if err != nil {
+			log.Printf("Error getting handler for route %s: %v", route.Path, err)
 			continue
 		}
 
@@ -58,7 +60,7 @@ func SetupRoutes() (*http.ServeMux, error) {
 		case "private":
 			middlewareStack = private
 		default:
-			log.Printf("Unknown middleware group for route: %s\n", route.Path)
+			log.Printf("Unknown middleware group for route: %s", route.Path)
 			continue
 		}
 
@@ -97,5 +99,5 @@ func getHandlerFunc(h *handlers.Handlers, handlerName string) (http.HandlerFunc,
 	if !handlerValue.IsValid() {
 		return nil, fmt.Errorf("handler %s not found", handlerName)
 	}
-	return handlerValue.Interface().(http.HandlerFunc), nil
+	return handlerValue.Interface().(func(http.ResponseWriter, *http.Request)), nil
 }
