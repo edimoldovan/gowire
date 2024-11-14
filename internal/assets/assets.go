@@ -13,8 +13,8 @@ import (
 	"github.com/andybalholm/brotli"
 )
 
-//go:embed assets
-var embeddeAssets embed.FS
+//go:embed files
+var embeddeFiles embed.FS
 
 // this stuff below is needed for gzip compression
 type gzipResponseWriter struct {
@@ -77,13 +77,13 @@ func SetupStaticServer(mux *http.ServeMux) http.Handler {
 	var staticServer http.Handler
 
 	if config.IsDevelopment() {
-		stripPrefix = "/assets/"
-		mux.HandleFunc("GET /assets/{path...}", serveStatic)
+		stripPrefix = "/files/"
+		mux.HandleFunc("GET /files/{path...}", serveStatic)
 	} else {
-		staticServer = customFileServer(http.FS(embeddeAssets))
+		staticServer = customFileServer(http.FS(embeddeFiles))
 		stripPrefix = "/"
-		mux.HandleFunc("GET /assets/{path...}", http.StripPrefix(stripPrefix, staticServer).ServeHTTP)
+		mux.HandleFunc("GET /files/{path...}", http.StripPrefix(stripPrefix, staticServer).ServeHTTP)
 	}
 
-	return customFileServer(http.FS(embeddeAssets))
+	return customFileServer(http.FS(embeddeFiles))
 }
