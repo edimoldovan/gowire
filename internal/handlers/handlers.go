@@ -1,22 +1,18 @@
 package handlers
 
 import (
-	"embed"
 	"fmt"
 	"gowire/internal/handlers/templates"
 	"html/template"
 	"net/http"
 )
 
-//go:embed templates/*.html
-var templateFS embed.FS
-
 var Tmpl *template.Template
 
 type Handlers struct{}
 
 func init() {
-	Tmpl = templates.ParseTemplates(templateFS)
+	Tmpl = templates.ParseTemplates()
 }
 
 func NewHandlers() (*Handlers, error) {

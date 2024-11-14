@@ -1,0 +1,22 @@
+[
+  {
+    "path": "/",
+    "handler": "Home",
+    "middleware": "public"
+  },
+  {
+    "path": "/about",
+    "handler": "About",
+    "middleware": "public"
+  },
+  {
+    "path": "/contact",
+    "handler": "Contact",
+    "middleware": "public"
+  },
+  {
+    "path": "/private",
+    "handler": "Private",
+    "middleware": "private"
+  }
+]

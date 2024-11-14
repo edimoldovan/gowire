@@ -1,25 +1,24 @@
 package router
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"reflect"
 
 	"gowire/internal/handlers"
 	"gowire/internal/middleware"
 )
 
-type RouteConfig struct {
+//go:embed config
+var routesConfig embed.FS
+
+type Route struct {
 	Path       string `json:"path"`
 	Handler    string `json:"handler"`
 	Middleware string `json:"middleware"`
-}
-
-type Config struct {
-	Routes []RouteConfig `json:"routes"`
 }
 
 var (
@@ -35,20 +34,19 @@ var (
 func SetupRoutes() *http.ServeMux {
 	h, err := handlers.NewHandlers()
 	if err != nil {
-		log.Printf("Error creating handlers: %v\n", err)
+		log.Fatalf("Error creating handlers: %v\n", err)
 	}
 	mux := http.NewServeMux()
 
-	config, err := loadConfig()
+	routes, err := loadConfig()
 	if err != nil {
-		fmt.Printf("Error loading config: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Error loading config: %v\n", err)
 	}
 
-	for _, route := range config.Routes {
+	for _, route := range *routes {
 		handler := getHandlerFunc(h, route.Handler)
 		if handler == nil {
-			fmt.Printf("Handler not found for route: %s\n", route.Path)
+			log.Printf("Handler not found for route: %s\n", route.Path)
 			continue
 		}
 
@@ -59,7 +57,7 @@ func SetupRoutes() *http.ServeMux {
 		case "private":
 			middlewareStack = private
 		default:
-			fmt.Printf("Unknown middleware group for route: %s\n", route.Path)
+			log.Printf("Unknown middleware group for route: %s\n", route.Path)
 			continue
 		}
 
@@ -67,59 +65,27 @@ func SetupRoutes() *http.ServeMux {
 	}
 
 	mux.HandleFunc("/light.js", h.ServeJS)
-
 	mux.HandleFunc("/routes", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(config.Routes)
+		json.NewEncoder(w).Encode(routes)
 	})
 
 	return mux
 }
 
-func loadConfig() (*Config, error) {
-	// configPath := os.Getenv("ROUTES_CONFIG_PATH")
-	// if configPath == "" {
-	// 	configPath = "config/routes.json" // default path
-	// }
+func loadConfig() (*[]Route, error) {
+	routesJSON, err := routesConfig.ReadFile("config/routes.json")
+	if err != nil {
+		return nil, fmt.Errorf("error reading config file: %v", err)
+	}
 
-	// data, err := os.ReadFile(configPath)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("error reading config file: %v", err)
-	// }
-
-	routes := `
-	{
-		"routes": [
-			{
-				"path": "/",
-				"handler": "Home",
-				"middleware": "public"
-			},
-			{
-				"path": "/about",
-				"handler": "About",
-				"middleware": "public"
-			},
-			{
-				"path": "/contact",
-				"handler": "Contact",
-				"middleware": "public"
-			},
-			{
-				"path": "/private",
-				"handler": "Private",
-				"middleware": "private"
-			}
-		]
-	}`
-
-	var config Config
-	err := json.Unmarshal([]byte(routes), &config)
+	var routes []Route
+	err = json.Unmarshal(routesJSON, &routes)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing config file: %v", err)
 	}
 
-	return &config, nil
+	return &routes, nil
 }
 
 func getHandlerFunc(h *handlers.Handlers, handlerName string) http.HandlerFunc {
@@ -127,5 +93,5 @@ func getHandlerFunc(h *handlers.Handlers, handlerName string) http.HandlerFunc {
 	if !handlerValue.IsValid() {
 		return nil
 	}
-	return handlerValue.Interface().(func(http.ResponseWriter, *http.Request))
+	return handlerValue.Interface().(http.HandlerFunc)
 }

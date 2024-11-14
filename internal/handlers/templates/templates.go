@@ -6,12 +6,19 @@ import (
 	"html/template"
 )
 
-func ParseTemplates(templateFS embed.FS) *template.Template {
+//go:embed html
+var templateHTML embed.FS
+
+func ParseTemplates() *template.Template {
 	customTemplateFunctions := CustomTemplateFunctions()
 
-	return template.Must(template.New("").Funcs(customTemplateFunctions).ParseFS(templateFS,
-		"templates/*.*",
-	))
+	return template.Must(
+		template.New("").
+			Funcs(customTemplateFunctions).
+			ParseFS(templateHTML,
+				"html/*.html",
+			),
+	)
 }
 
 func CustomTemplateFunctions() template.FuncMap {
