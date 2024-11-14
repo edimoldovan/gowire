@@ -31,16 +31,17 @@ var (
 	}
 )
 
-func SetupRoutes() *http.ServeMux {
+func SetupRoutes() (*http.ServeMux, error) {
 	h, err := handlers.NewHandlers()
 	if err != nil {
-		log.Fatalf("Error creating handlers: %v\n", err)
+		return nil, fmt.Errorf("error creating handlers: %v", err)
 	}
+
 	mux := http.NewServeMux()
 
 	routes, err := loadConfig()
 	if err != nil {
-		log.Fatalf("Error loading config: %v\n", err)
+		return nil, fmt.Errorf("error loading config: %v", err)
 	}
 
 	for _, route := range *routes {
@@ -70,7 +71,7 @@ func SetupRoutes() *http.ServeMux {
 		json.NewEncoder(w).Encode(routes)
 	})
 
-	return mux
+	return mux, nil
 }
 
 func loadConfig() (*[]Route, error) {
@@ -88,10 +89,13 @@ func loadConfig() (*[]Route, error) {
 	return &routes, nil
 }
 
-func getHandlerFunc(h *handlers.Handlers, handlerName string) http.HandlerFunc {
+func getHandlerFunc(h *handlers.Handlers, handlerName string) (http.HandlerFunc, error) {
+	if h == nil {
+		return nil, fmt.Errorf("handlers is nil")
+	}
 	handlerValue := reflect.ValueOf(h).MethodByName(handlerName)
 	if !handlerValue.IsValid() {
-		return nil
+		return nil, fmt.Errorf("handler %s not found", handlerName)
 	}
-	return handlerValue.Interface().(http.HandlerFunc)
+	return handlerValue.Interface().(http.HandlerFunc), nil
 }

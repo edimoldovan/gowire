@@ -9,7 +9,10 @@ import (
 )
 
 func main() {
-	mux := router.SetupRoutes()
+	mux, err := router.SetupRoutes()
+	if err != nil {
+		log.Fatalf("Failed to setup routes: %v", err)
+	}
 
 	fmt.Println("Server starting on port 8080...")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
