@@ -1,4 +1,4 @@
-package static
+package assets
 
 import (
 	"compress/gzip"
@@ -67,7 +67,8 @@ func customFileServer(fs http.FileSystem) http.Handler {
 }
 
 func serveStatic(w http.ResponseWriter, r *http.Request) {
-	file := fmt.Sprintf("internal/server/static%s", r.URL.Path)
+	file := fmt.Sprintf("internal/assets%s", r.URL.Path)
+	log.Println(file)
 	http.ServeFile(w, r, file)
 }
 
@@ -76,7 +77,6 @@ func SetupStaticServer(mux *http.ServeMux) http.Handler {
 	var staticServer http.Handler
 
 	if config.IsDevelopment() {
-		log.Println("Serving static files from disk")
 		stripPrefix = "/assets/"
 		mux.HandleFunc("GET /assets/{path...}", serveStatic)
 	} else {

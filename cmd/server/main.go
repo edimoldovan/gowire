@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"gowire/internal/assets"
 	"gowire/internal/router"
-	"gowire/internal/static"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to setup routes: %v", err)
 	}
-	static.SetupStaticServer(mux)
+	assets.SetupStaticServer(mux)
 
 	fmt.Println("Server starting on port 8080...")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
