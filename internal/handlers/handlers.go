@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"gowire/internal/handlers/templates"
+	"gowire/internal/templates"
 	"html/template"
 	"net/http"
 )
@@ -49,9 +49,4 @@ func (h Handlers) Private(w http.ResponseWriter, r *http.Request) {
 	RenderHTML(w, "private", map[string]interface{}{
 		"Title": "Private",
 	})
-}
-
-func (h Handlers) ServeJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/javascript")
-	http.ServeFile(w, r, "web/static/js/light.js")
 }

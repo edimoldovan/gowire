@@ -67,7 +67,6 @@ func SetupRoutes() (*http.ServeMux, error) {
 		mux.Handle(route.Path, middleware.Chain(handler, middlewareStack...))
 	}
 
-	mux.HandleFunc("/light.js", h.ServeJS)
 	mux.HandleFunc("/routes", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(routes)
