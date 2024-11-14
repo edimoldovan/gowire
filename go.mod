@@ -1,5 +1,3 @@
 module gowire
 
-go 1.22
-
-require ()
+go 1.23
